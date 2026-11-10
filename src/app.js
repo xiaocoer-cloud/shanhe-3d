@@ -375,7 +375,7 @@
       if (credit) credit.hidden = true;
       const cb = document.querySelector('.layers-pop input[data-layer="tdt"]');
       if (cb) cb.checked = false;
-      saveLayers();
+      if (!silent) saveLayers();
       if (!silent) toast(e.message && /CORS|blocked/.test(e.message) ? '天地图影像不可用：域名未授权' : '天地图影像载入失败');
       console.warn('Tianditu load failed', e);
     }
