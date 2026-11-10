@@ -1894,7 +1894,7 @@
         clearHover();
         if (pointerDown.mode === 'orbit') {
           cam.want.theta = pointerDown.theta - dx * 0.0042;
-          cam.want.phi = clamp(pointerDown.phi + dy * 0.0034, 0.26, 1.12);
+          cam.want.phi = clamp(pointerDown.phi - dy * 0.0034, 0.26, 1.12);
         } else {
           const k = cam.want.radius * 0.00155;
           const th = pointerDown.theta;
