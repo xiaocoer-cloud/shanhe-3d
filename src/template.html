@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07100d">
+<title>山河纪 · 中国历史疆域三维长卷</title>
+<meta name="description" content="拖动时间轴，从战国到当代，在可旋转、可缩放的三维地形上观看中国历史疆域的两千四百年变迁。">
+<style>/*__STYLE__*/</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="scene" aria-label="中国历史疆域三维地图"></canvas>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="masthead">
+    <div class="seal" aria-hidden="true"><span>山</span><span>河</span></div>
+    <div class="brand">
+      <h1>山河纪</h1>
+      <p>中国历史疆域 · 三维长卷</p>
+    </div>
+    <div class="brand-en">
+      <span>CHRONICLES OF THE REALM</span>
+      <em>3D TERRITORIAL ATLAS</em>
+    </div>
+  </header>
+
+  <nav class="top-actions" aria-label="地图操作">
+    <button id="btn-rotate" class="icon-btn" type="button" title="自动旋转（R）" aria-label="自动旋转">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4"/></svg>
+    </button>
+    <button id="btn-reset" class="icon-btn" type="button" title="复位视角（0）" aria-label="复位视角">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 15v5h-5M4 4l6 6M20 20l-6-6"/></svg>
+    </button>
+    <button id="btn-layers" class="icon-btn" type="button" title="图层" aria-label="图层" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></svg>
+    </button>
+    <button id="btn-about" class="icon-btn" type="button" title="关于此图" aria-label="关于此图">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+    </button>
+  </nav>
+
+  <div class="layers-pop" id="layers-pop" hidden>
+    <div class="pop-head">图层 <span>LAYERS</span></div>
+    <label><input type="checkbox" data-layer="neighbors" checked><i></i><span>四邻政权</span></label>
+    <label><input type="checkbox" data-layer="rivers" checked><i></i><span>江河湖海</span></label>
+    <label><input type="checkbox" data-layer="modern" checked><i></i><span>今日国界</span></label>
+    <label><input type="checkbox" data-layer="labels" checked><i></i><span>政权名称</span></label>
+    <label><input type="checkbox" data-layer="tdt"><i></i><span>天地图影像<em>需授权域名</em></span></label>
+    <label><input type="checkbox" data-layer="grid" checked><i></i><span>经纬网</span></label>
+    <label><input type="checkbox" data-layer="shadow" checked><i></i><span>光影</span></label>
+  </div>
+
+  <aside class="info-panel" id="info-panel">
+    <div class="era-line">
+      <span id="era-index">CHAPTER 01 / 18</span>
+      <span id="era-en">WARRING STATES</span>
+    </div>
+    <div class="era-heading">
+      <h2 id="era-title">战国</h2>
+      <span class="era-badge" id="era-badge">战国</span>
+    </div>
+    <div class="era-years" id="era-years">前 403 — 前 221</div>
+    <p class="era-summary" id="era-summary"></p>
+    <div class="phase-block">
+      <span class="block-label">疆域阶段 <i>PHASE</i></span>
+      <p id="phase-caption"></p>
+    </div>
+    <div class="event-block">
+      <div class="block-label"><span>纪事 <i>CHRONICLE</i></span><span class="event-year" id="event-year"></span></div>
+      <ul id="event-list"></ul>
+    </div>
+    <div class="meta-row">
+      <span>都城</span><strong id="meta-capital">—</strong>
+    </div>
+  </aside>
+
+  <div class="compass" id="compass" aria-hidden="true">
+    <div class="compass-ring">
+      <span class="n">北</span>
+      <span class="tick t1"></span><span class="tick t2"></span><span class="tick t3"></span>
+      <i class="needle" id="compass-needle"></i>
+    </div>
+    <em>N</em>
+  </div>
+
+  <div class="legend" id="legend">
+    <div class="legend-title">图例 <span>LEGEND</span></div>
+    <div class="legend-item"><i class="swatch main"></i><span>主政权</span></div>
+    <div class="legend-item"><i class="swatch rival"></i><span>并立政权</span></div>
+    <div class="legend-item"><i class="swatch protectorate"></i><span>都护 / 羁縻</span></div>
+    <div class="legend-item"><i class="swatch neighbor"></i><span>四邻</span></div>
+    <div class="legend-item"><i class="swatch modern"></i><span>今日国界</span></div>
+  </div>
+
+  <div class="tip" id="tip" role="status"></div>
+
+  <div class="tdt-credit" id="tdt-credit" hidden>天地图影像 · © 国家地理信息公共服务平台</div>
+
+  <div class="hint-pill" id="hint-pill">
+    <span class="mouse"></span>
+    <span>拖拽旋转 · 滚轮缩放 · 右键平移</span>
+  </div>
+
+  <div class="fallback" id="fallback" hidden>
+    <div class="fallback-inner">
+      <h2>此设备暂不支持 WebGL</h2>
+      <p>三维地图需要浏览器开启硬件加速。你仍可阅读下方的时间轴与历史信息，或使用支持 WebGL 的浏览器打开。</p>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="loading-seal"><span>山</span><span>河</span></div>
+    <div class="loading-line"><i></i></div>
+    <p id="loading-text">正在铺陈山河</p>
+  </div>
+
+  <div class="modal" id="about-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="about-title">
+      <button class="modal-close" id="modal-close" type="button" aria-label="关闭">×</button>
+      <span class="modal-kicker">ABOUT THE ATLAS</span>
+      <h2 id="about-title">关于这幅三维长卷</h2>
+      <p>从公元前 403 年三家分晋，到 2025 年，十八个历史时期、一百九十余幅疆域阶段，在同一座可旋转的三维沙盘上连续展开。</p>
+      <p>每块政权以高度区分主政权、并立政权、都护羁縻与四邻；地面层保留今日海岸线、江河湖泊与经纬网，作为阅读历史的参照。</p>
+      <div class="modal-grid">
+        <div><b>拖动</b><span>时间轴或地图</span></div>
+        <div><b>滚轮</b><span>缩放沙盘</span></div>
+        <div><b>右键</b><span>平移视角</span></div>
+        <div><b>空格</b><span>播放 / 暂停</span></div>
+      </div>
+      <p class="modal-note">历史疆域没有唯一、精确的边界。图中轮廓均为示意性近似，用于呈现疆域大势与历史变迁，不可作为边界依据。</p>
+      <p class="modal-credit">疆域数据改编自 <a href="https://github.com/DeanChensj/jiangshan-map" target="_blank" rel="noreferrer">江山时序</a>（GPL-3.0）；海岸线与河湖来自 <a href="https://www.naturalearthdata.com/" target="_blank" rel="noreferrer">Natural Earth</a>（公有领域）；地形浮雕由 <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noreferrer">AWS Terrain Tiles / Mapzen</a> 高程数据生成。天地图为可选在线影像层（<a href="https://www.tianditu.gov.cn/" target="_blank" rel="noreferrer">tianditu.gov.cn</a>），需在已授权域名下使用。</p>
+      <div class="modal-actions"><button id="modal-start" class="primary" type="button">开始漫游</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<footer id="timeline">
+  <div class="timeline-inner">
+    <div class="tl-head">
+      <div class="tl-title">
+        <span id="tl-era">战国</span>
+        <small id="tl-en">WARRING STATES</small>
+      </div>
+      <div class="tl-year">
+        <span id="tl-year">前 403</span><em>年</em>
+      </div>
+      <div class="tl-phase" id="tl-phase">战国初期</div>
+      <div class="tl-actions">
+        <button class="step-btn" id="btn-prev" type="button" title="上一年（←）" aria-label="上一年">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+        </button>
+        <button class="play-btn" id="btn-play" type="button" title="播放（空格）" aria-label="播放历史演进">
+          <svg class="ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/></svg>
+          <svg class="ico-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+        </button>
+        <button class="step-btn" id="btn-next" type="button" title="下一年（→）" aria-label="下一年">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+        </button>
+        <div class="scale-switch" role="group" aria-label="时间刻度">
+          <button type="button" data-scale="era" class="active">朝代等宽</button>
+          <button type="button" data-scale="real">年代比例</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="track-wrap">
+      <div class="track" id="track" role="slider" tabindex="0" aria-label="历史时间轴" aria-valuemin="-403" aria-valuemax="2025" aria-valuenow="1000">
+        <div class="track-bands" id="track-bands"></div>
+        <div class="track-ticks" id="track-ticks"></div>
+        <div class="track-events" id="track-events"></div>
+        <div class="track-hover" id="track-hover" hidden></div>
+        <div class="playhead" id="playhead">
+          <span class="ph-bubble" id="ph-bubble">前 403</span>
+          <span class="ph-stem"></span>
+          <span class="ph-dot"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-foot">
+      <div class="tl-scale"><span>前 403</span><span id="foot-mid">2 428 年 · 18 个时期 · 190 幅疆域</span><span>2025</span></div>
+      <div class="tl-hint" id="tl-hint">拖动时间轴，穿越两千四百年 <kbd>←</kbd><kbd>→</kbd> 逐年 <kbd>空格</kbd> 播放</div>
+    </div>
+  </div>
+</footer>
+
+<script>window.__ATLAS_DATA__ = /*__DATA__*/;</script>
+<script>window.__TERRAIN_URI__ = '__TERRAIN_DATA__';</script>
+<script type="module">
+/*__THREE__*/
+/*__APP__*/
+</script>
+</body>
+</html>
